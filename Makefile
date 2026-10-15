@@ -3,7 +3,11 @@ export DEVELOPER_DIR
 
 BUILD_DIR := build
 INSTALL_DIR := $(HOME)/Applications
-XCODEBUILD := xcodebuild -project Summon.xcodeproj -scheme Summon -derivedDataPath $(BUILD_DIR)
+# An explicit destination stops xcodebuild warning that "My Mac" matches
+# both arm64 and x86_64. Builds are for this Mac's architecture only, which
+# is all a local install needs; an App Store archive builds both.
+XCODEBUILD := xcodebuild -project Summon.xcodeproj -scheme Summon -derivedDataPath $(BUILD_DIR) \
+	-destination 'platform=macOS,arch=$(shell uname -m)'
 
 .DEFAULT_GOAL := build
 .PHONY: project build release run install clean
