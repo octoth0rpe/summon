@@ -97,7 +97,7 @@ Summon/
 ├── KeyCodes.swift       Key name → virtual key code, layout-aware via UCKeyTranslate
 ├── FileWatcher.swift    kqueue (DispatchSource) watcher for config.toml
 ├── Launcher.swift       NSWorkspace.openApplication
-├── AppCatalog.swift     Scans the Applications folders for the app picker
+├── AppCatalog.swift     Scans app folders for the app picker; user-granted folders
 ├── ConfigureView.swift  Shortcut editor, launch-at-login toggle
 ├── AboutView.swift
 └── Assets.xcassets      App icon PNGs and the menu bar template SVG
@@ -131,9 +131,16 @@ the watcher without resetting rows in the UI while you type.
   the file watch is re-attached on every event. kqueue events are push-based, so idle
   cost is zero. Events are debounced by 150 ms.
 - **Sandbox from day one.** This keeps the App Store an option. The main cost is the
-  config path above. The app scanner reads the real `~/Applications` via `getpwuid`;
-  if the sandbox ever blocks that, those apps just don't appear in the picker, though
-  they still work when written into the file by hand.
+  config path above. The other is that the sandbox blocks reading the home directory,
+  including `~/Applications`. The app picker lists `/Applications` and
+  `/System/Applications` on its own; other folders are added under **App Folders** in
+  the Configure window. Each one is chosen in an open panel (the
+  `user-selected.read-only` entitlement) and saved as a security-scoped bookmark in
+  UserDefaults (`bookmarks.app-scope`), so access survives relaunches. When
+  `~/Applications` exists but can't be read (permission denied, as opposed to not
+  found), the Configure window shows a banner offering to grant it. Launching
+  doesn't need any of this: LaunchServices finds apps by bundle ID anywhere, so a
+  shortcut written into the file by hand works even if its app isn't in the picker.
 - **Swift 6 language mode.** Everything stateful is `@MainActor`. Carbon and
   DispatchSource callbacks arrive on the main thread and hop in with
   `MainActor.assumeIsolated`.
@@ -163,7 +170,7 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 - Toggle behavior: pressing the shortcut for the frontmost app hides it
 - A "record shortcut" field that captures the next key press
 - Warnings for duplicate shortcuts or combos macOS refuses
-- An "Other…" app picker (NSOpenPanel) for apps outside the scanned folders
+- An "Other…" item in the app picker for a single app outside the app folders
 
 ## License
 

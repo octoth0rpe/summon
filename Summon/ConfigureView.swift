@@ -12,6 +12,9 @@ struct ConfigureView: View {
             if let error = store.loadError {
                 ErrorBanner(message: error)
             }
+            if catalog.needsHomeApplicationsAccess {
+                HomeApplicationsBanner(catalog: catalog)
+            }
 
             if store.shortcuts.isEmpty {
                 ContentUnavailableView(
@@ -36,6 +39,7 @@ struct ConfigureView: View {
                     store.shortcuts.append(Shortcut())
                 }
                 Spacer()
+                AppFoldersMenu(catalog: catalog)
                 LaunchAtLoginToggle()
                 Button("Show Config File") {
                     NSWorkspace.shared.activateFileViewerSelecting([store.fileURL])
@@ -118,6 +122,59 @@ private struct ShortcutRow: View {
         } set: { isOn in
             if isOn { shortcut.modifiers.insert(modifier) } else { shortcut.modifiers.remove(modifier) }
         }
+    }
+}
+
+/// Adds and removes folders, beyond /Applications, that the app picker lists.
+private struct AppFoldersMenu: View {
+    let catalog: AppCatalog
+
+    var body: some View {
+        Menu("App Folders") {
+            Button("Add Folder…") {
+                Task { await catalog.addFolders() }
+            }
+            if !catalog.folders.isEmpty {
+                Divider()
+                ForEach(catalog.folders) { folder in
+                    Menu(folder.displayPath) {
+                        Button("Show in Finder") {
+                            NSWorkspace.shared.activateFileViewerSelecting([folder.url])
+                        }
+                        Button("Remove") {
+                            Task { await catalog.remove(folder) }
+                        }
+                    }
+                }
+            }
+        }
+        .fixedSize()
+        .help("Folders besides /Applications to look for apps in, such as ~/Applications")
+    }
+}
+
+private struct HomeApplicationsBanner: View {
+    let catalog: AppCatalog
+
+    var body: some View {
+        HStack {
+            Image(systemName: "folder.badge.questionmark")
+                .foregroundStyle(.blue)
+            Text("Summon needs your permission to list the apps in ~/Applications.")
+            Spacer()
+            Button("Grant Access…") {
+                Task { await catalog.addFolders() }
+            }
+            Button("Not Now", systemImage: "xmark") {
+                catalog.dismissHomeApplicationsPrompt()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderless)
+            .help("Don't ask again. You can still add it under App Folders.")
+        }
+        .font(.callout)
+        .padding(10)
+        .background(.blue.opacity(0.1))
     }
 }
 
