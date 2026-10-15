@@ -90,23 +90,9 @@ private struct ShortcutRow: View {
             Image(systemName: "arrow.right")
                 .foregroundStyle(.secondary)
 
-            Picker("App", selection: $shortcut.app) {
-                if shortcut.app.isEmpty {
-                    Text("Choose an App…").tag("")
-                } else if catalog.app(for: shortcut.app) == nil {
-                    // Configured in the file but not in the scanned folders.
-                    Text(shortcut.app).tag(shortcut.app)
-                }
-                ForEach(catalog.apps) { app in
-                    Label {
-                        Text(app.name)
-                    } icon: {
-                        Image(nsImage: catalog.icon(for: app))
-                    }
-                    .tag(app.bundleID)
-                }
-            }
-            .labelsHidden()
+            AppPicker(selection: $shortcut.app, catalog: catalog)
+                // Fill the row, so every pop-up is the same width whatever it shows.
+                .frame(maxWidth: .infinity)
 
             Button("Delete", systemImage: "minus.circle", action: onDelete)
                 .labelStyle(.iconOnly)
@@ -121,6 +107,87 @@ private struct ShortcutRow: View {
             shortcut.modifiers.contains(modifier)
         } set: { isOn in
             if isOn { shortcut.modifiers.insert(modifier) } else { shortcut.modifiers.remove(modifier) }
+        }
+    }
+}
+
+/// The app pop-up: an NSPopUpButton that holds only the chosen app until it
+/// opens, then shows a copy of the catalog's menu.
+///
+/// A SwiftUI Picker resolves all ~170 items through the view graph every time
+/// a row is built, edited, or re-hosted by the List as it scrolls: about 100 ms
+/// a row, which made the window slow to open and hitch while scrolling. Even an
+/// NSPopUpButton that always carries the full menu costs ~25 ms a row in layout,
+/// so the list is filled on NSPopUpButton.willPopUpNotification instead.
+private struct AppPicker: NSViewRepresentable {
+    @Binding var selection: String
+    let catalog: AppCatalog
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> PopUpButton {
+        let button = PopUpButton()
+        button.target = context.coordinator
+        button.action = #selector(Coordinator.choose(_:))
+        NotificationCenter.default.addObserver(
+            context.coordinator, selector: #selector(Coordinator.willPopUp(_:)),
+            name: NSPopUpButton.willPopUpNotification, object: button)
+        return button
+    }
+
+    func updateNSView(_ button: PopUpButton, context: Context) {
+        context.coordinator.selection = $selection
+        context.coordinator.source = catalog.menu
+        let menu = NSMenu()
+        menu.addItem(Self.item(for: selection, in: catalog.menu))
+        button.menu = menu
+        button.selectItem(at: 0)
+    }
+
+    /// A copy of the catalog's item for the app, or a stand-in when nothing is
+    /// chosen yet or the app isn't in the scanned folders.
+    static func item(for bundleID: String, in source: NSMenu) -> NSMenuItem {
+        let index = source.indexOfItem(withRepresentedObject: bundleID)
+        if index >= 0, let item = source.item(at: index)?.copy() as? NSMenuItem { return item }
+        let item = NSMenuItem(title: bundleID.isEmpty ? "Choose an App…" : bundleID,
+                              action: nil, keyEquivalent: "")
+        item.representedObject = bundleID
+        return item
+    }
+
+    /// An NSPopUpButton's natural width is its widest item. The row sets the
+    /// width instead, so every row's pop-up is the same size.
+    final class PopUpButton: NSPopUpButton {
+        @MainActor private static let height = NSPopUpButton().intrinsicContentSize.height
+
+        override var intrinsicContentSize: NSSize {
+            NSSize(width: NSView.noIntrinsicMetric, height: Self.height)
+        }
+    }
+
+    @MainActor
+    final class Coordinator: NSObject {
+        var selection: Binding<String>?
+        var source: NSMenu?
+
+        /// Swaps in the full list just before the menu opens. The next update
+        /// trims it back to the chosen app.
+        @objc func willPopUp(_ notification: Notification) {
+            guard let button = notification.object as? NSPopUpButton, let source,
+                  let menu = source.copy() as? NSMenu
+            else { return }
+            let selection = selection?.wrappedValue ?? ""
+            var index = menu.indexOfItem(withRepresentedObject: selection)
+            if index < 0 {
+                menu.insertItem(AppPicker.item(for: selection, in: source), at: 0)
+                index = 0
+            }
+            button.menu = menu
+            button.selectItem(at: index)
+        }
+
+        @objc func choose(_ button: NSPopUpButton) {
+            selection?.wrappedValue = button.selectedItem?.representedObject as? String ?? ""
         }
     }
 }

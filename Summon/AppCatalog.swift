@@ -26,6 +26,8 @@ struct AppFolder: Identifiable {
 @MainActor @Observable
 final class AppCatalog {
     private(set) var apps: [AppInfo] = []
+    /// `apps` as menu items, built once per scan. Each row's pop-up shows a copy.
+    private(set) var menu = NSMenu()
     private(set) var folders: [AppFolder] = []
     /// ~/Applications exists but the sandbox won't let us read it, and the
     /// user hasn't granted it (or dismissed the prompt to).
@@ -52,6 +54,13 @@ final class AppCatalog {
     func refresh() async {
         let roots = Self.systemRoots.map { URL(filePath: $0, directoryHint: .isDirectory) } + folders.map(\.url)
         apps = await Task.detached(priority: .userInitiated) { Self.scan(roots) }.value
+        menu = NSMenu()
+        for app in apps {
+            let item = NSMenuItem(title: app.name, action: nil, keyEquivalent: "")
+            item.image = icon(for: app)
+            item.representedObject = app.bundleID
+            menu.addItem(item)
+        }
         needsHomeApplicationsAccess = !UserDefaults.standard.bool(forKey: Self.dismissedPromptKey)
             && Self.isBlocked(Self.homeApplications)
     }
@@ -72,10 +81,6 @@ final class AppCatalog {
         } catch {
             return false
         }
-    }
-
-    func app(for bundleID: String) -> AppInfo? {
-        apps.first { $0.bundleID == bundleID }
     }
 
     /// A 16 pt copy of the app's icon, sized for menus.
