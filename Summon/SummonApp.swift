@@ -1,3 +1,4 @@
+import OSLog
 import SwiftUI
 
 @main
@@ -49,11 +50,27 @@ private struct MenuContent: View {
     private func show(_ id: String) {
         openWindow(id: id)
         DispatchQueue.main.async {
+            let frontmost = NSWorkspace.shared.frontmostApplication?.localizedName ?? "?"
             NSApp.activate()
             // SwiftUI names scene windows "<scene id>-AppWindow-<n>".
-            NSApp.windows
-                .first { $0.identifier?.rawValue.hasPrefix(id) == true }?
-                .makeKeyAndOrderFront(nil)
+            guard let window = NSApp.windows.first(where: { $0.identifier?.rawValue.hasPrefix(id) == true }) else {
+                log.error("show \(id, privacy: .public): no window found")
+                return
+            }
+            window.makeKeyAndOrderFront(nil)
+            // activate() is only a request, and macOS can decline it while another
+            // app is frontmost. This raises the window above that app regardless.
+            window.orderFrontRegardless()
+
+            // Activation is asynchronous, so check how it went a moment later.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                log.notice("""
+                    show \(id, privacy: .public): frontmost before=\(frontmost, privacy: .public) \
+                    active=\(NSApp.isActive) key=\(window.isKeyWindow) visible=\(window.isVisible)
+                    """)
+            }
         }
     }
 }
+
+private let log = Logger(subsystem: "com.octoth0rpe.summon", category: "windows")
