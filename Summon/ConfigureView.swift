@@ -25,6 +25,7 @@ struct ConfigureView: View {
                         }
                     }
                     .onDelete { store.shortcuts.remove(atOffsets: $0) }
+                    .onMove { store.shortcuts.move(fromOffsets: $0, toOffset: $1) }
                 }
             }
 
@@ -58,6 +59,11 @@ private struct ShortcutRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            // Rows drag from anywhere that isn't a control; the grip just shows that.
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
+                .help("Drag to reorder")
+
             ForEach(Modifier.allCases, id: \.self) { modifier in
                 Toggle(modifier.symbol, isOn: binding(for: modifier))
                     .toggleStyle(.button)

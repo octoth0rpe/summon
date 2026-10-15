@@ -14,7 +14,8 @@ so you can edit them in the built-in Configure window or in your editor of choic
 Requirements: Xcode 26+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```sh
-make run        # generate the project, build Debug, launch
+make            # generate the project and build Debug
+make install    # build Release, replace ~/Applications/Summon.app, relaunch
 ```
 
 Or open it in Xcode:
@@ -28,12 +29,15 @@ The Makefile points `DEVELOPER_DIR` at `/Applications/Xcode.app`, so it works ev
 `xcode-select` still points at the Command Line Tools. Override with
 `make DEVELOPER_DIR=/path/to/Xcode-beta.app/Contents/Developer`.
 
-| Target         | What it does                                     |
-|----------------|--------------------------------------------------|
-| `make project` | Regenerate `Summon.xcodeproj` from `project.yml`  |
-| `make build`   | Debug build into `build/`                        |
-| `make run`     | Build, quit any running Summon, launch the new one |
-| `make clean`   | Remove `build/` and the generated project        |
+| Target          | What it does                                                         |
+|-----------------|----------------------------------------------------------------------|
+| `make`          | Same as `make build`                                                  |
+| `make build`    | Debug build into `build/`                                             |
+| `make install`  | Release build; quit Summon, replace `~/Applications/Summon.app`, relaunch |
+| `make run`      | Debug build; quit Summon, launch it from `build/`                     |
+| `make release`  | Release build into `build/`                                           |
+| `make project`  | Regenerate `Summon.xcodeproj` from `project.yml`                      |
+| `make clean`    | Remove `build/` and the generated project                             |
 
 ## Configuration
 
@@ -150,9 +154,9 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 - For the App Store or notarized builds: set `DEVELOPMENT_TEAM`, remove the ad-hoc
   identity, and change `PRODUCT_BUNDLE_IDENTIFIER` if needed. The sandbox entitlement
   and hardened runtime are already on.
-- Launch at login uses `SMAppService.mainApp`. It's most reliable when the app lives in
-  `/Applications`. A build launched from `build/` can register itself, but the login
-  item then points at that build.
+- Launch at login uses `SMAppService.mainApp`, which registers the copy of the app that
+  turned it on. Turn it on from the `make install` copy in `~/Applications`, not from a
+  `make run` build in `build/`.
 
 ## Ideas / not yet done
 
