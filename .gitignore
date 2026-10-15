@@ -1,0 +1,6 @@
+build/
+Summon.xcodeproj/
+Summon/Info.plist
+Summon/Summon.entitlements
+.DS_Store
+xcuserdata/
