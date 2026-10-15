@@ -43,10 +43,17 @@ private struct MenuContent: View {
             .keyboardShortcut("q")
     }
 
-    /// Menu bar apps aren't active by default, so bring the app forward
-    /// or the window opens behind whatever the user is working in.
+    /// Menu bar apps aren't active by default, and openWindow doesn't raise a
+    /// window that's already open. So once the menu has closed (closing it
+    /// can undo an earlier activation), activate the app and raise the window.
     private func show(_ id: String) {
-        NSApp.activate()
         openWindow(id: id)
+        DispatchQueue.main.async {
+            NSApp.activate()
+            // SwiftUI names scene windows "<scene id>-AppWindow-<n>".
+            NSApp.windows
+                .first { $0.identifier?.rawValue.hasPrefix(id) == true }?
+                .makeKeyAndOrderFront(nil)
+        }
     }
 }
