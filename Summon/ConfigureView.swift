@@ -27,6 +27,7 @@ struct ConfigureView: View {
                     ForEach($store.shortcuts) { $shortcut in
                         ShortcutRow(
                             shortcut: $shortcut, catalog: catalog,
+                            problem: store.problems[shortcut.id],
                             isRecording: recorder.recordingID == shortcut.id,
                             onRecord: { recorder.toggle(shortcut.id, in: store) },
                             onDelete: { store.shortcuts.removeAll { $0.id == shortcut.id } })
@@ -136,6 +137,7 @@ private final class KeyRecorder {
 private struct ShortcutRow: View {
     @Binding var shortcut: Shortcut
     let catalog: AppCatalog
+    let problem: ShortcutProblem?
     let isRecording: Bool
     let onRecord: () -> Void
     let onDelete: () -> Void
@@ -185,6 +187,13 @@ private struct ShortcutRow: View {
             AppPicker(selection: $shortcut.app, catalog: catalog)
                 // Fill the row, so every pop-up is the same width whatever it shows.
                 .frame(maxWidth: .infinity)
+
+            if let problem {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.yellow)
+                    .help(problem.message)
+                    .accessibilityLabel(problem.message)
+            }
 
             Button("Delete", systemImage: "minus.circle", action: onDelete)
                 .labelStyle(.iconOnly)

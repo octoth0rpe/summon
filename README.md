@@ -85,6 +85,16 @@ key leaves the toggles alone. Esc cancels. Summon's own shortcuts are paused whi
 recording, so you can record combos it already uses. Keypad keys and Escape can't be
 recorded, and keys your keyboard lacks (F13–F20 on a laptop) can still be typed into the file.
 
+A ⚠️ on a row means its shortcut may not work. Hover for the reason:
+- **Same keys as a row above.** macOS registers a combo once per app, so the first
+  row wins and this one is off.
+- **macOS also uses these keys** (System Settings → Keyboard → Keyboard Shortcuts:
+  Mission Control, Spaces, screenshots…). macOS's shortcut usually wins. The row stays
+  registered, so it starts working if you turn the macOS one off. This check can't see
+  every system shortcut (Spotlight's `⌘Space` isn't listed) or other apps' shortcuts:
+  macOS doesn't report those, and registering a taken combo doesn't fail.
+- **macOS refused these keys.** Rare, for the same reason.
+
 Edits from either side show up on the other. Saving the file reloads shortcuts
 immediately. Edits in the Configure window rewrite the file, which means comments
 and formatting you added by hand are replaced with the generated layout. If the file
@@ -157,7 +167,7 @@ The source artwork is in [`icons/`](icons/) (see [`icons/ICONS.md`](icons/ICONS.
 `Assets.xcassets/AppIcon.appiconset` holds PNGs rendered from `app-icon-light.svg`. The
 menu bar icon is `menubar-template.svg`, set to render as a template image.
 
-TODO: build a `.icon` in Icon Composer from the layered SVGs to get the dark, tinted and
+TODO ([steps](icons/ICON-COMPOSER.md)): build a `.icon` in Icon Composer from the layered SVGs to get the dark, tinted and
 Liquid Glass variants. Then drop the `.icon` into the target and remove the appiconset.
 
 ## Distribution notes
@@ -174,7 +184,6 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 ## Ideas / not yet done
 
 - Toggle behavior: pressing the shortcut for the frontmost app hides it
-- Warnings for duplicate shortcuts or combos macOS refuses
 - An "Other…" item in the app picker for a single app outside the app folders
 - Per-shortcut conditions: this Mac only, a time window, not when an app is in front
 
