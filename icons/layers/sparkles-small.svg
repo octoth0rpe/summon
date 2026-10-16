@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Icon Composer layer: the two small sparkles, light colors. Same positions as in app-icon-light.svg. -->
+  <path transform="translate(726 300) scale(80)" fill="#C084FC" d="M0,-1 Q0.16,-0.16 1,0 Q0.16,0.16 0,1 Q-0.16,0.16 -1,0 Q-0.16,-0.16 0,-1Z"/>
+  <path transform="translate(300 300) scale(48)" fill="#A78BFA" d="M0,-1 Q0.16,-0.16 1,0 Q0.16,0.16 0,1 Q-0.16,0.16 -1,0 Q-0.16,-0.16 0,-1Z"/>
+</svg>

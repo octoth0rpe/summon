@@ -21,6 +21,8 @@ To view the preview, serve this folder (e.g. `python3 -m http.server`) and open 
 
 ## App icon
 
+Step-by-step: [ICON-COMPOSER.md](ICON-COMPOSER.md), with layer files in [`layers/`](layers/).
+
 - Use **Icon Composer** (ships with Xcode 26). It builds a single `.icon` file with light, dark and tinted/clear variants, and macOS picks one based on the user's appearance setting.
 - Import the elements as separate layers (background, large sparkle, small sparkles) so they get the Liquid Glass depth and specular effects. The SVGs are already structured that way.
 - The background squircle in the SVGs follows the macOS icon grid (an 824 px rounded rect inside a 1024 canvas). Icon Composer supplies its own mask, so you may only need the sparkle layers plus a background fill.
