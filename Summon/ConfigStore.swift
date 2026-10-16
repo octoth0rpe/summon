@@ -9,10 +9,17 @@ final class ConfigStore {
     var shortcuts: [Shortcut] = [] {
         didSet {
             guard shortcuts != oldValue else { return }
-            hotKeys.register(shortcuts.filter(\.isComplete)) { shortcut in
-                Launcher.launch(shortcut.app)
-            }
+            registerHotKeys()
             if !isApplyingFile { save() }
+        }
+    }
+
+    /// While true no hotkeys are registered, so the key recorder in the
+    /// Configure window gets every combo, including ones Summon uses.
+    var hotKeysSuspended = false {
+        didSet {
+            guard hotKeysSuspended != oldValue else { return }
+            registerHotKeys()
         }
     }
 
@@ -39,6 +46,12 @@ final class ConfigStore {
 
         reload()
         watcher = FileWatcher(url: fileURL) { [weak self] in self?.reload() }
+    }
+
+    private func registerHotKeys() {
+        hotKeys.register(hotKeysSuspended ? [] : shortcuts.filter(\.isComplete)) { shortcut in
+            Launcher.launch(shortcut.app)
+        }
     }
 
     func reload() {

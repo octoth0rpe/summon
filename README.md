@@ -71,13 +71,19 @@ app  = "com.apple.Terminal"
   - Characters are matched against your current keyboard layout, so `'` means the key
     that types `'` on your layout, not a fixed physical key.
   - Characters typed with Shift become Shift plus the base key: on a US layout `cmd+|`
-    means `cmd+shift+\` and `cmd++` means `cmd+shift+=`. The Configure window rewrites
-    them as you type. Letters are case-insensitive, so `cmd+K` is just `cmd+k`.
+    means `cmd+shift+\` and `cmd++` means `cmd+shift+=`. Summon rewrites them that way
+    when it loads the file. Letters are case-insensitive, so `cmd+K` is just `cmd+k`.
   - Keypad keys aren't supported; `1` and `+` always mean the main-keyboard keys.
 - **`app`**: the app's bundle identifier. Find one with
   `osascript -e 'id of app "Safari"'`.
 
 Pressing a shortcut launches the app, or brings it to the front if it's already running.
+
+In the Configure window, click a row's key button and press a key to record it. Hold
+modifiers while you press it to set the toggles too (`⌘'` records `'` with ⌘); a bare
+key leaves the toggles alone. Esc cancels. Summon's own shortcuts are paused while
+recording, so you can record combos it already uses. Keypad keys and Escape can't be
+recorded, and keys your keyboard lacks (F13–F20 on a laptop) can still be typed into the file.
 
 Edits from either side show up on the other. Saving the file reloads shortcuts
 immediately. Edits in the Configure window rewrite the file, which means comments
@@ -98,7 +104,7 @@ Summon/
 ├── FileWatcher.swift    kqueue (DispatchSource) watcher for config.toml
 ├── Launcher.swift       NSWorkspace.openApplication
 ├── AppCatalog.swift     Scans app folders for the app picker; user-granted folders
-├── ConfigureView.swift  Shortcut editor, launch-at-login toggle
+├── ConfigureView.swift  Shortcut editor, key recorder, launch-at-login toggle
 ├── AboutView.swift
 └── Assets.xcassets      App icon PNGs and the menu bar template SVG
 ```
@@ -168,7 +174,6 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 ## Ideas / not yet done
 
 - Toggle behavior: pressing the shortcut for the frontmost app hides it
-- A "record shortcut" field that captures the next key press
 - Warnings for duplicate shortcuts or combos macOS refuses
 - An "Other…" item in the app picker for a single app outside the app folders
 
