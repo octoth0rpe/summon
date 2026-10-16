@@ -176,6 +176,8 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 - Toggle behavior: pressing the shortcut for the frontmost app hides it
 - Warnings for duplicate shortcuts or combos macOS refuses
 - An "Other…" item in the app picker for a single app outside the app folders
+- Per-shortcut conditions: this Mac only, a time window, not when an app is in front
+
 
 ## License
 
