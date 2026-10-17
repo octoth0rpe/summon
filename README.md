@@ -9,11 +9,14 @@ so you can edit them in the built-in Configure window or in your editor of choic
 - App Sandbox enabled; no Accessibility or Input Monitoring permission needed
 - One dependency: [TOMLKit](https://github.com/LebJe/TOMLKit)
 
+`main` is always the latest release.
+
 ## Quick start
 
 Requirements: Xcode 26+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```sh
+git clone https://github.com/octoth0rpe/summon.git && cd summon
 make            # generate the project and build Debug
 make install    # build Release, replace ~/Applications/Summon.app, relaunch
 ```
@@ -186,7 +189,6 @@ Liquid Glass variants. Then drop the `.icon` into the target and remove the appi
 - Toggle behavior: pressing the shortcut for the frontmost app hides it
 - An "Other…" item in the app picker for a single app outside the app folders
 - Per-shortcut conditions: this Mac only, a time window, not when an app is in front
-
 
 ## License
 
