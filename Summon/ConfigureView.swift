@@ -228,8 +228,8 @@ private struct AppPicker: NSViewRepresentable {
 
     func makeNSView(context: Context) -> PopUpButton {
         let button = PopUpButton()
-        button.target = context.coordinator
-        button.action = #selector(Coordinator.choose(_:))
+        // No action of the button's own: each item in the open menu has one
+        // (see Coordinator.willPopUp), which says which item was chosen.
         NotificationCenter.default.addObserver(
             context.coordinator, selector: #selector(Coordinator.willPopUp(_:)),
             name: NSPopUpButton.willPopUpNotification, object: button)
@@ -239,6 +239,9 @@ private struct AppPicker: NSViewRepresentable {
     func updateNSView(_ button: PopUpButton, context: Context) {
         context.coordinator.selection = $selection
         context.coordinator.source = catalog.menu
+        // While the menu's open, leave it be: replacing it under the user
+        // would leave the button's selected item out of step with theirs.
+        guard !context.coordinator.isOpen else { return }
         let menu = NSMenu()
         menu.addItem(Self.item(for: selection, in: catalog.menu))
         button.menu = menu
@@ -270,9 +273,12 @@ private struct AppPicker: NSViewRepresentable {
     final class Coordinator: NSObject {
         var selection: Binding<String>?
         var source: NSMenu?
+        /// Whether the full menu is open, when updates leave it alone.
+        private(set) var isOpen = false
+        private var endTracking: (any NSObjectProtocol)?
 
         /// Swaps in the full list just before the menu opens. The next update
-        /// trims it back to the chosen app.
+        /// after it closes trims it back to the chosen app.
         @objc func willPopUp(_ notification: Notification) {
             guard let button = notification.object as? NSPopUpButton, let source,
                   let menu = source.copy() as? NSMenu
@@ -283,12 +289,32 @@ private struct AppPicker: NSViewRepresentable {
                 menu.insertItem(AppPicker.item(for: selection, in: source), at: 0)
                 index = 0
             }
+            // Each item says itself which app it is when chosen. Reading the
+            // button's selected item instead picked up the one-item menu an
+            // update had put back while this one was open: choosing any app
+            // then chose the current one again, and nothing changed.
+            for item in menu.items {
+                item.target = self
+                item.action = #selector(choose(_:))
+            }
+            isOpen = true
+            endTracking = NotificationCenter.default.addObserver(
+                forName: NSMenu.didEndTrackingNotification, object: menu, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.menuClosed() }
+            }
             button.menu = menu
             button.selectItem(at: index)
         }
 
-        @objc func choose(_ button: NSPopUpButton) {
-            selection?.wrappedValue = button.selectedItem?.representedObject as? String ?? ""
+        @objc func choose(_ item: NSMenuItem) {
+            selection?.wrappedValue = item.representedObject as? String ?? ""
+        }
+
+        private func menuClosed() {
+            isOpen = false
+            if let endTracking { NotificationCenter.default.removeObserver(endTracking) }
+            endTracking = nil
         }
     }
 }
